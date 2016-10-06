@@ -50,8 +50,38 @@ function test2() {
   });
 }
 
+function test3() {
+  let count = 0;
+  let doCancel = false;
+  setTimeout(() => {
+    doCancel = true;
+  }, 1050)
+  let errorCount = 0;
+  
+  return Promise.interval(() => {
+    return new Promise((resolve, reject) => {
+      if(doCancel) {
+        return reject(new Error('ended'));
+      }
+      count++;
+      setTimeout(resolve, 50);
+    });
+  }, 100, { 
+    onError(err) {
+      errorCount += 1;
+      if(errorCount > 5) {
+        throw err;
+      }
+    }
+  }).catch(err => {
+    assert(errorCount === 6, 'onError should have been triggered 6 times');
+    console.log('handle onError OK');
+    return;
+  });
+}
 
-Promise.all([test1(), test2()]).then(() => {
+
+Promise.all([test1(), test2(), test3()]).then(() => {
   console.log('All OK');
 }).catch(err => {
   console.error('Error', err);

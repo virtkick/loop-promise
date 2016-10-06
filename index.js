@@ -3,7 +3,7 @@ module.exports = function(Promise, opts) {
     throw new Error('You need to pass Promise imple');
   }
   
-  function loop(loopBody, interval) {
+  function loop(loopBody, interval, {onError} = {}) {
     let timeoutHandle;
     let cancelHandler = () => clearTimeout(timeoutHandle);
     let loopHandler = reject => {
@@ -11,6 +11,13 @@ module.exports = function(Promise, opts) {
         Promise.resolve()
           .then(() => loopBody())
           .then(() => loopHandler(reject))
+          .catch(err => {
+            if(onError) {
+              onError(err);
+              return loopHandler(reject);
+            }
+            throw err;
+          })
           .catch(reject);
       }, interval);
     };
@@ -28,7 +35,7 @@ module.exports = function(Promise, opts) {
     return new Date().getTime();
   }
 
-  function interval(loopBody, interval) {
+  function interval(loopBody, interval, {onError} = {}) {
     let timeoutHandle;
     let cancelHandler = () => clearTimeout(timeoutHandle);
     let loopHandler = (reject, timeout = interval) => {
@@ -37,6 +44,13 @@ module.exports = function(Promise, opts) {
         Promise.resolve()
           .then(() => loopBody())
           .then(() => loopHandler(reject, interval - (getTime() - startTime)))
+          .catch(err => {
+            if(onError) {
+              onError(err);
+              return loopHandler(reject);
+            }
+            throw err;
+          })
           .catch(reject);
       }, timeout);
     };
